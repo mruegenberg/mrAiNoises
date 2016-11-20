@@ -198,18 +198,20 @@ shader_evaluate
             r += F[i] * fw[i];
         }
 
-        // scaling for even-sized gaps. See Advaced Renderman section on cell noise.
-        AtVector diff = (P - delta[1]) - (P - delta[0]);
-        // jagging
-        if(data->jaggedGap) {
-            diff += AiVNoise3(P * 3, 1, 0, 1) * 5;
-        }
-        float diffLen = pow((pow(abs(diff.x), p) + pow(abs(diff.y), p) + pow(abs(diff.z),p)), 1.0f / p);
-        float gapScaleFactor = diffLen / (F[0] + F[1]);
+        if(gapSize > 0) {
+            // scaling for even-sized gaps. See Advaced Renderman section on cell noise.
+            AtVector diff = (P - delta[1]) - (P - delta[0]);
+            // jagging
+            if(data->jaggedGap) {
+                diff += AiVNoise3(P * 3, 1, 0, 1) * 5;
+            }
+            float diffLen = pow((pow(abs(diff.x), p) + pow(abs(diff.y), p) + pow(abs(diff.z),p)), 1.0f / p);
+            float gapScaleFactor = diffLen / (F[0] + F[1]);
         
-        // gap
-        if(gapSize * gapScaleFactor > F[1] - F[0]) {
-            r *= (-1.0);
+            // gap
+            if(gapSize * gapScaleFactor > F[1] - F[0]) {
+                r *= (-1.0);
+            }
         }
     }
 
