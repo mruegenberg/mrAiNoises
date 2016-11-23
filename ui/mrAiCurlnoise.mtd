@@ -1,0 +1,33 @@
+[node mrAiWorleynoise]
+      desc STRING "Worley noise for Arnold"
+      c4d.classification STRING "texture"
+      c4d.menu STRING "texture"
+      maya.name STRING "mrAiWorleynoise"
+      maya.classification STRING "utility/other"
+      maya.id INT 0x00116419
+      houdini.icon STRING "COP2_lookup"
+      houdini.category STRING "mr"
+      houdini.help_url STRING ""
+      houdini.order STRING "texture position radius"
+
+      [attr space]
+           houdini.label STRING "Space"
+           desc STRING "Space in which to calculate the noise pattern."
+           linkable BOOL FALSE
+      [attr scale]
+           houdini.label STRING "Scale"
+           desc STRING "Space in which to calculate the noise pattern."
+           linkable BOOL TRUE
+      [attr octaves]
+           houdini.label STRING "Octaves"
+           desc STRING "Number of noise octaves"
+           linkable BOOL FALSE
+      [attr lacunarity]
+           houdini.label STRING "Lacunarity"
+           desc STRING "Frequency scaling after each octave"
+           linkable BOOL TRUE
+      [attr gain]
+           houdini.label STRING "Gain"
+           desc STRING "Amplitude scaling after each octave"
+           linkable BOOL TRUE
+

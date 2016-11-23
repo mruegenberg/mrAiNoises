@@ -27,9 +27,13 @@ include_directories(src)
 add_library (mrAiWorleynoise SHARED "src/mrAiWorleynoise.cpp" ${HEADER_FILES})
 target_link_libraries(mrAiWorleynoise ${LIBS})
 
+add_library (mrAiCurlnoise SHARED "src/mrAiCurlnoise.cpp" ${HEADER_FILES})
+target_link_libraries(mrAiCurlnoise ${LIBS})
+
 
 
 IF (WIN32)
 ELSE()
-	set_target_properties(mrAiWorleynoise PROPERTIES PREFIX "") # remove the "lib" prefix
+  set_target_properties(mrAiWorleynoise PROPERTIES PREFIX "") # remove the "lib" prefix
+  set_target_properties(mrAiCurlnoise PROPERTIES PREFIX "")
 ENDIF()
