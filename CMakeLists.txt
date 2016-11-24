@@ -15,6 +15,12 @@ IF (NOT DEFINED(ARNOLD_BASE_DIR))
 ENDIF()
 find_package(Arnold REQUIRED)
 
+if (WIN32)
+	set(GLM_INCLUDE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/deps/glm-0.9.8.2/glm)
+endif(WIN32)
+find_package(GLM REQUIRED) # for Simplex.h
+include_directories(${GLM_INCLUDE_DIRS})
+
 include_directories(${ARNOLD_INCLUDE_DIRS})
 link_directories(${ARNOLD_LIBRARY_DIRS})
 set(LIBS
