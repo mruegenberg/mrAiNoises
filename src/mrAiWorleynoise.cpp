@@ -68,6 +68,7 @@ enum DistmodeEnum
     DIST_F1_P_F3, // (2 * f1 + f2) / 3
     DIST_F3_M_F2_M_F1, // (2 * f3 - f2 - f1) / 2
     DIST_F1_P_F2_P_F3, // (0.5 * f1 + 0.33 * f2 + (1 - 0.5 - 0.33) * f3)
+    DIST_NORMALIZED,
 };
 
 static const char* distmodeNames[] =
@@ -77,6 +78,7 @@ static const char* distmodeNames[] =
 	"(2 f1 + f2) / 3",
         "(2 f3 - f2 - f1) / 2",
         "F1/2 + F2/3 + f3/6",
+        "normalized",
 	NULL
 };
 
@@ -169,6 +171,10 @@ shader_evaluate
         AtVector delta[PT_CNT]; // vector difference between input point and n-th closest feature point
                                 // => feature point n is located at P-delta[n]
         float lacunarity = AiShaderEvalParamFlt(p_lacunarity);
+
+        // AiCellular(P, 1, data->octaves, lacunarity, 1.0, F, delta, NULL);
+        // AtVector closest = (P - delta[0]);
+        
         AiCellular(P, PT_CNT, data->octaves, lacunarity, 1.0, F, delta, NULL);
 
         // FIXME: does this work as intended?
@@ -193,20 +199,33 @@ shader_evaluate
         default: break;
         }
 
-        // weighted sum
-        for(int i=0; i<PT_CNT; ++i) {
-            r += F[i] * fw[i];
+        float gapSize = AiShaderEvalParamFlt(p_gapSize);
+        
+        // normalized distance. needed for normalized dist measure and gap computation
+        float normalizedDist = 0.0f;
+        if(gapSize > 0 || data->distMode == DIST_NORMALIZED) {
+            normalizedDist = AiV3Dot(0.5 * (delta[0] + delta[1]), // difference between shading point and halfway point (which is on shortest line between closest and 2nd closest pt)
+                                     AiV3Normalize(delta[1] - delta[0]) // from cloest to 2nd closest pt
+                );
+        }
+        
+        if(data->distMode == DIST_NORMALIZED) {
+            r = normalizedDist;
+        }
+        else {
+            // weighted sum
+            for(int i=0; i<PT_CNT; ++i) {
+                r += F[i] * fw[i];
+            }
         }
 
-        float gapSize = AiShaderEvalParamFlt(p_gapSize);
         if(gapSize > 0) {
-            // scaling for even-sized gaps. Original idea from Advaced Renderman section 10.5 on cell noise
+            // scaling for even-sized gaps. Originally an idea from Advaced Renderman section 10.5 on cell noise            
             // see also https://thebookofshaders.com/12/
-            // and http://www.iquilezles.org/www/articles/voronoilines/voronoilines.htm
+            // and most importantly http://www.iquilezles.org/www/articles/voronoilines/voronoilines.htm
 
-            float dist = AiV3Dot(0.5 * (delta[0] +  delta[1]), // difference between shading point and halfway point
-                                 AiV3Normalize(delta[1] - delta[0]));
-            if(1.0 - AiSmoothStep(0.0f, gapSize, dist) > 0) {
+            // as soon as we have a normalized distance for each cell, we can just smoothstep that.
+            if(1.0 - AiSmoothStep(0.0f, gapSize, normalizedDist) > 0) {
                 r *= (-1.0);
             }
             /*
