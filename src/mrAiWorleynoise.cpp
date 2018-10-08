@@ -165,11 +165,13 @@ shader_evaluate
     float r = 0.0; // sic!
     {
 #define PT_CNT 3
-        float F[PT_CNT];
-        AtVector delta[PT_CNT];
+        float F[PT_CNT]; // distances to feature points
+        AtVector delta[PT_CNT]; // vector difference between input point and n-th closest feature point
+                                // => feature point n is located at P-delta[n]
         float lacunarity = AiShaderEvalParamFlt(p_lacunarity);
         AiCellular(P, PT_CNT, data->octaves, lacunarity, 1.0, F, delta, NULL);
-        
+
+        // FIXME: does this work as intended?
         float p = data->distMeasure;
         if(p != 2.0f) {
             // recompute distances based on metric
@@ -198,13 +200,24 @@ shader_evaluate
 
         float gapSize = AiShaderEvalParamFlt(p_gapSize);
         if(gapSize > 0) {
-            // scaling for even-sized gaps. See Advaced Renderman section on cell noise.
-            AtVector diff = (P - delta[1]) - (P - delta[0]);
+            // scaling for even-sized gaps. Original idea from Advaced Renderman section 10.5 on cell noise
+            // see also https://thebookofshaders.com/12/
+            // and http://www.iquilezles.org/www/articles/voronoilines/voronoilines.htm
+            AtVector diff = (P - delta[1]) - (P - delta[0]); // difference between 2 nearest hit points
+            
             // jagging
             if(data->jaggedGap) {
                 diff += AiVNoise3(P * 3, 1, 0, 1) * 5;
             }
+
+            // length of diff in chosen distance metric
+            // for p=2 equivalent to Euclidean length of diff
             float diffLen = pow((pow(abs(diff.x), p) + pow(abs(diff.y), p) + pow(abs(diff.z),p)), 1.0f / p);
+
+            // F[1] - F[0]: 0 exactly at the dividing line
+            // F[0] + F[1]: shortest distance between hit points
+            // gapScaleFactor: relative amount we are away from minimum distance
+            //                 will usually be > 1
             float gapScaleFactor = diffLen / (F[0] + F[1]);
         
             // gap
