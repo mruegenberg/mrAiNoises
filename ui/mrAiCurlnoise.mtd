@@ -26,8 +26,4 @@
            houdini.label STRING "Lacunarity"
            desc STRING "Frequency scaling after each octave"
            linkable BOOL TRUE
-      [attr gain]
-           houdini.label STRING "Gain"
-           desc STRING "Amplitude scaling after each octave"
-           linkable BOOL TRUE
 

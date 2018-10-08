@@ -27,12 +27,17 @@ SOFTWARE.
 #include <cstdio>
 #include "Simplex.h"
 
+#define OWN_CURL 1
+
 enum CurlParams {
     p_space,
     p_scale,
     p_octaves, // = turbulence
     p_lacunarity,
-    p_gain, // = roughness
+    // p_gain, // = roughness // not supported by Arnold fBm
+#ifdef OWN_CURL
+    p_time,
+#endif
 };
 
 #define TRUE 1
@@ -62,7 +67,10 @@ node_parameters
     AiParameterVec("scale", 1.0f, 1.0f, 1.0f);
     AiParameterInt("octaves", 1);
     AiParameterFlt("lacunarity", 1.92f);
-    AiParameterFlt("gain", 0.5f); 
+    // AiParameterFlt("gain", 0.5f);
+#ifdef OWN_CURL
+    AiParameterFlt("time", 0.0f);
+#endif
 }
 
 struct ShaderData {
@@ -109,7 +117,10 @@ shader_evaluate
 
     AtVector scale   = AiShaderEvalParamVec(p_scale);
     float lacunarity = AiShaderEvalParamFlt(p_lacunarity);
-    float gain       = AiShaderEvalParamFlt(p_gain);
+    // float gain       = AiShaderEvalParamFlt(p_gain);
+#ifdef OWN_CURL
+    float time       = AiShaderEvalParamFlt(p_time);
+#endif
       
     AtVector P;
     // space transform
@@ -125,10 +136,33 @@ shader_evaluate
     // scaling
     P *= scale;
 
+#ifdef OWN_CURL
+    // finite difference curl, as seen in Bridson's curl noise paper
+    // psi_1 = x, psi_2: y, psi_3: z of the vector noise
+    // d psi_x/d y: finite difference of psi_x along direction y
+    // so d psi_3 / d y = valYNxt.z - valYPre.z
+    
+    float delta = 1e-4f;
+    AtVector valXPre = AiVNoise4(P + AtVector(-delta, 0, 0), time, data->octaves, 0, lacunarity);
+    AtVector valXNxt = AiVNoise4(P + AtVector( delta, 0, 0), time, data->octaves, 0, lacunarity);
+    AtVector valYPre = AiVNoise4(P + AtVector(0, -delta, 0), time, data->octaves, 0, lacunarity);
+    AtVector valYNxt = AiVNoise4(P + AtVector(0,  delta, 0), time, data->octaves, 0, lacunarity);
+    AtVector valZPre = AiVNoise4(P + AtVector(0, 0, -delta), time, data->octaves, 0, lacunarity);
+    AtVector valZNxt = AiVNoise4(P + AtVector(0, 0,  delta), time, data->octaves, 0, lacunarity);
+
+    // as described in Bridson's paper section 2.1, see the comments above
+    AtRGB result = AtRGB((valYNxt.z - valYPre.z) - (valZNxt.y - valZPre.y),
+                         (valZNxt.x - valZPre.x) - (valXNxt.z - valXPre.z),
+                         (valXNxt.y - valXPre.y) - (valYNxt.x - valYPre.x));
+    result /= delta;
+    
+#else
+    float gain = 0.5; // Arnold doesn't support this, so it was removed
     glm::vec3 p1(P.x, P.y, P.z);
     glm::vec3 noise = Simplex::curlNoise(p1, data->octaves, lacunarity, gain);
-
     AtRGB result; result.r = noise.x; result.g = noise.y; result.b = noise.z;
+#endif
+    
     sg->out.RGB() = result;
 }
 
