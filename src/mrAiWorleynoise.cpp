@@ -203,7 +203,16 @@ shader_evaluate
             // scaling for even-sized gaps. Original idea from Advaced Renderman section 10.5 on cell noise
             // see also https://thebookofshaders.com/12/
             // and http://www.iquilezles.org/www/articles/voronoilines/voronoilines.htm
+
+            float dist = AiV3Dot(0.5 * (delta[0] +  delta[1]), // difference between shading point and halfway point
+                                 AiV3Normalize(delta[1] - delta[0]));
+            if(1.0 - AiSmoothStep(0.0f, gapSize, dist) > 0) {
+                r *= (-1.0);
+            }
+            /*
+            
             AtVector diff = (P - delta[1]) - (P - delta[0]); // difference between 2 nearest hit points
+                                                             // = delta[0] - delta[1]
             
             // jagging
             if(data->jaggedGap) {
@@ -220,10 +229,10 @@ shader_evaluate
             //                 will usually be > 1
             float gapScaleFactor = diffLen / (F[0] + F[1]);
         
-            // gap
             if(gapSize * gapScaleFactor > F[1] - F[0]) {
                 r *= (-1.0);
             }
+            */
         }
     }
 
