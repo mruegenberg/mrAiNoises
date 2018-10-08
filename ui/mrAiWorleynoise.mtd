@@ -8,7 +8,7 @@
       houdini.icon STRING "COP2_lookup"
       houdini.category STRING "mr"
       houdini.help_url STRING ""
-      houdini.order STRING "texture position radius"
+      houdini.order STRING "space scale innercolor outercolor octaves lacunarity distancemeasure distancemode gapcolor gapsize jaggedgap"
 
       [attr space]
            houdini.label STRING "Space"
