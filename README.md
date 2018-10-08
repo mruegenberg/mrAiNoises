@@ -10,9 +10,11 @@ Based on [miWorleyNoise](https://github.com/mruegenberg/miWorleyNoise) and [alCe
 Based on [Simplex Noise](https://github.com/simongeilfus/SimplexNoise) by Simon Geilfus.
 
 ## Building
-1. Put the Arnold SDK in `deps`, then update the corresponding variable in `CMakeLists.txt`.
+1. Put the Arnold SDK in `deps`
+, then update the corresponding variable in `CMakeLists.txt`.
 2. `mkdir build && cd build`
-3. `cmake .. && make`
+3. ``cmake .. -DARNOLD_BASE_DIR=`pwd`/../deps/Arnold-5.1.1.1-linux && make``
+   (Replace the Arnold version with your own.)
 
 This should result in shared libs (dll/so/dylib) in the `build` directory. Copy these, along with the `.mtd` files from `ui` to your `ARNOLD_PLUGIN_PATH`.
 

@@ -95,6 +95,7 @@ node_parameters
     AiParameterBool("jaggedgap", FALSE);
 }
 
+// stores static parameters
 struct ShaderData {
     int space;
     int octaves;
@@ -110,20 +111,22 @@ node_initialize
     AiNodeSetLocalData(node, data);
 }
 
-node_update
-{
-    ShaderData *data = (ShaderData *)AiNodeGetLocalData(node);
-    data->space = params[p_space].INT;
-    data->octaves = params[p_octaves].INT;
-    data->distMeasure = params[p_distanceMeasure].FLT;
-    data->distMode = params[p_distanceMode].INT;
-    data->jaggedGap = params[p_jaggedGap].BOOL;
-}
-
 node_finish
 {
     ShaderData *data = (ShaderData *)AiNodeGetLocalData(node);
     delete data;
+}
+
+node_update
+{
+    ShaderData *data = (ShaderData *)AiNodeGetLocalData(node);
+    
+    // in node_update, we have to use AiNodeGet* instead of AuShaderEvalParam
+    data->space = AiNodeGetInt(node, "space");
+    data->octaves = AiNodeGetInt(node, "octaves");
+    data->distMeasure = AiNodeGetFlt(node, "distancemeasure");
+    data->distMode = AiNodeGetInt(node, "distancemode");
+    data->jaggedGap = AiNodeGetBool(node, "jaggedgap");
 }
 
 node_loader
@@ -141,27 +144,21 @@ node_loader
 
 shader_evaluate
 {
-    const AtParamValue *params = AiNodeGetParams(node);
     ShaderData* data = (ShaderData*)AiNodeGetLocalData(node);
-
-    AtPoint scale    = AiShaderEvalParamVec(p_scale);
-    AtRGB innerColor = AiShaderEvalParamRGB(p_innerColor);
-    AtRGB outerColor = AiShaderEvalParamRGB(p_outerColor);
-    float lacunarity = AiShaderEvalParamFlt(p_lacunarity);
-    AtRGB gapColor   = AiShaderEvalParamRGB(p_gapColor);
-    float gapSize    = AiShaderEvalParamFlt(p_gapSize);
       
-    AtPoint P;
+    AtVector P;
     // space transform
+    static const AtString pref("Pref");
     {
         switch (data->space) {
         case NS_OBJECT: P = sg->Po; break;
-        case NS_PREF: if (!AiUDataGetPnt("Pref", &P)) P = sg->Po; break;
+        case NS_PREF: if (!AiUDataGetVec(pref, P)) P = sg->Po; break;
         default: P = sg->P; break; // NS_WORLD
         }
     }
 
     // scaling
+    AtVector scale = AiShaderEvalParamVec(p_scale);
     P *= scale;
 
     // eval distances
@@ -170,6 +167,7 @@ shader_evaluate
 #define PT_CNT 3
         float F[PT_CNT];
         AtVector delta[PT_CNT];
+        float lacunarity = AiShaderEvalParamFlt(p_lacunarity);
         AiCellular(P, PT_CNT, data->octaves, lacunarity, 1.0, F, delta, NULL);
         
         float p = data->distMeasure;
@@ -198,6 +196,7 @@ shader_evaluate
             r += F[i] * fw[i];
         }
 
+        float gapSize = AiShaderEvalParamFlt(p_gapSize);
         if(gapSize > 0) {
             // scaling for even-sized gaps. See Advaced Renderman section on cell noise.
             AtVector diff = (P - delta[1]) - (P - delta[0]);
@@ -216,10 +215,13 @@ shader_evaluate
     }
 
     if(r < 0) {
-        sg->out.RGB = gapColor;
+        AtRGB gapColor = AiShaderEvalParamRGB(p_gapColor);
+        sg->out.RGB() = gapColor;
     }
     else {
-        sg->out.RGB = AiColorLerp(r, outerColor, innerColor);
+        AtRGB innerColor = AiShaderEvalParamRGB(p_innerColor);
+        AtRGB outerColor = AiShaderEvalParamRGB(p_outerColor);
+        sg->out.RGB() = AiLerp(r, outerColor, innerColor);
     }
 }
 

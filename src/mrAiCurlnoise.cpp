@@ -77,17 +77,17 @@ node_initialize
     AiNodeSetLocalData(node, data);
 }
 
-node_update
-{
-    ShaderData *data = (ShaderData *)AiNodeGetLocalData(node);
-    data->space = params[p_space].INT;
-    data->octaves = params[p_octaves].INT;
-}
-
 node_finish
 {
     ShaderData *data = (ShaderData *)AiNodeGetLocalData(node);
     delete data;
+}
+
+node_update
+{
+    ShaderData *data = (ShaderData *)AiNodeGetLocalData(node);
+    data->space   = AiNodeGetInt(node, "space");
+    data->octaves = AiNodeGetInt(node, "octaves");
 }
 
 node_loader
@@ -105,19 +105,19 @@ node_loader
 
 shader_evaluate
 {
-    const AtParamValue *params = AiNodeGetParams(node);
     ShaderData* data = (ShaderData*)AiNodeGetLocalData(node);
 
-    AtPoint scale    = AiShaderEvalParamVec(p_scale);
+    AtVector scale   = AiShaderEvalParamVec(p_scale);
     float lacunarity = AiShaderEvalParamFlt(p_lacunarity);
     float gain       = AiShaderEvalParamFlt(p_gain);
       
-    AtPoint P;
+    AtVector P;
     // space transform
+    static const AtString pref("Pref");
     {
         switch (data->space) {
         case NS_OBJECT: P = sg->Po; break;
-        case NS_PREF: if (!AiUDataGetPnt("Pref", &P)) P = sg->Po; break;
+        case NS_PREF: if (!AiUDataGetVec(pref, P)) P = sg->Po; break;
         default: P = sg->P; break; // NS_WORLD
         }
     }
@@ -129,6 +129,6 @@ shader_evaluate
     glm::vec3 noise = Simplex::curlNoise(p1, data->octaves, lacunarity, gain);
 
     AtRGB result; result.r = noise.x; result.g = noise.y; result.b = noise.z;
-    sg->out.RGB = result;
+    sg->out.RGB() = result;
 }
 

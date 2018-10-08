@@ -5,8 +5,11 @@ project (mrAiNoises)
 list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
 
 # set ARNOLD_BASE_DIR to whatever folder contains the Arnold SDK (which must be downloaded separately) include dir.
+# Pass this value to the `cmake` command, e.g `cmake .. -DARNOLD_BASE_DIR=`pwd`/../deps/Arnold-5.1.1.1-linux`
+
 # set MTOA_BASE_DIR to whatever folder contains the MtoA include dir
-IF (NOT DEFINED(ARNOLD_BASE_DIR)) 
+IF (NOT DEFINED(ARNOLD_BASE_DIR))
+        MESSAGE(WARNING "ARNOLD_BASE_DIR not set. Using default value")
 	IF (WIN32)
 		set(ARNOLD_BASE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/deps/Arnold-4.2.14.4-windows)
 	ELSE()
@@ -15,9 +18,9 @@ IF (NOT DEFINED(ARNOLD_BASE_DIR))
 ENDIF()
 find_package(Arnold REQUIRED)
 
-if (WIN32)
+# if (WIN32) // theoretically, we can use any GLM in the system, but for safety, we always use the one we already have (newer GLM has API incompatibilities)
 	set(GLM_INCLUDE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/deps/glm-0.9.8.2/glm)
-endif(WIN32)
+# endif(WIN32)
 find_package(GLM REQUIRED) # for Simplex.h
 include_directories(${GLM_INCLUDE_DIRS})
 
