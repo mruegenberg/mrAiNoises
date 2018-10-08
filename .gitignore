@@ -1,3 +1,11 @@
 build/
 /deps/Arnold*
 *~
+\#*\#
+/.emacs.desktop
+/.emacs.desktop.lock
+*.elc
+auto-save-list
+tramp
+.\#*
+
