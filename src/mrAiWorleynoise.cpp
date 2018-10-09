@@ -94,7 +94,6 @@ node_parameters
     AiParameterFlt("distancemeasure", 2.0f); // Minkowski distance measure
     AiParameterEnum("distancemode", 0, distmodeNames);
     AiParameterFlt("gapsize", 0.05f);
-    AiParameterBool("jaggedgap", FALSE);
 }
 
 // stores static parameters
@@ -103,7 +102,6 @@ struct ShaderData {
     int octaves;
     float distMeasure;
     int distMode;
-    bool jaggedGap;
 };
         
 
@@ -128,7 +126,6 @@ node_update
     data->octaves = AiNodeGetInt(node, "octaves");
     data->distMeasure = AiNodeGetFlt(node, "distancemeasure");
     data->distMode = AiNodeGetInt(node, "distancemode");
-    data->jaggedGap = AiNodeGetBool(node, "jaggedgap");
 }
 
 node_loader
@@ -165,8 +162,9 @@ shader_evaluate
 
     // eval distances
     float r = 0.0; // sic!
+    bool isBorder = false;
     {
-#define PT_CNT 3
+#define PT_CNT 5
         float F[PT_CNT]; // distances to feature points
         AtVector delta[PT_CNT]; // vector difference between input point and n-th closest feature point
                                 // => feature point n is located at P-delta[n]
@@ -177,14 +175,14 @@ shader_evaluate
         
         AiCellular(P, PT_CNT, data->octaves, lacunarity, 1.0, F, delta, NULL);
 
-        // FIXME: does this work as intended?
         float p = data->distMeasure;
-        if(p != 2.0f) {
+        if(p != 2.0f)
+        {
             // recompute distances based on metric
             for(int i=0; i<PT_CNT; ++i) {
-                F[i] = pow(pow(abs(delta[i].x), p) +
-                           pow(abs(delta[i].y), p) +
-                           pow(abs(delta[i].z), p),
+                F[i] = pow(pow(fabs(delta[i].x), p) +
+                           pow(fabs(delta[i].y), p) +
+                           pow(fabs(delta[i].z), p),
                            1.0f / p);
             }
         }
@@ -205,8 +203,20 @@ shader_evaluate
         float normalizedDist = 0.0f;
         if(gapSize > 0 || data->distMode == DIST_NORMALIZED) {
             normalizedDist = AiV3Dot(0.5 * (delta[0] + delta[1]), // difference between shading point and halfway point (which is on shortest line between closest and 2nd closest pt)
-                                     AiV3Normalize(delta[1] - delta[0]) // from cloest to 2nd closest pt
+                                     AiV3Normalize(delta[1] - delta[0]) // from closest to 2nd closest pt
                 );
+
+            // check that we calculate relative dist for closest point
+            // this is still not really perfect.
+            for(size_t i = 2; i < PT_CNT; ++i) {
+                float d = AiV3Dot(0.5 * (delta[0] + delta[i]),
+                                  AiV3Normalize(delta[i] - delta[0])
+                    );
+                normalizedDist = AiMin(normalizedDist, d);
+            }
+            
+            // TODO: find a way to get a function that always goes from 0 to 1
+            //       until the border
         }
         
         if(data->distMode == DIST_NORMALIZED) {
@@ -219,43 +229,17 @@ shader_evaluate
             }
         }
 
-        if(gapSize > 0) {
-            // scaling for even-sized gaps. Originally an idea from Advaced Renderman section 10.5 on cell noise            
-            // see also https://thebookofshaders.com/12/
-            // and most importantly http://www.iquilezles.org/www/articles/voronoilines/voronoilines.htm
-
-            // as soon as we have a normalized distance for each cell, we can just smoothstep that.
-            if(1.0 - AiSmoothStep(0.0f, gapSize, normalizedDist) > 0) {
-                r *= (-1.0);
-            }
-            /*
-            
-            AtVector diff = (P - delta[1]) - (P - delta[0]); // difference between 2 nearest hit points
-                                                             // = delta[0] - delta[1]
-            
-            // jagging
-            if(data->jaggedGap) {
-                diff += AiVNoise3(P * 3, 1, 0, 1) * 5;
-            }
-
-            // length of diff in chosen distance metric
-            // for p=2 equivalent to Euclidean length of diff
-            float diffLen = pow((pow(abs(diff.x), p) + pow(abs(diff.y), p) + pow(abs(diff.z),p)), 1.0f / p);
-
-            // F[1] - F[0]: 0 exactly at the dividing line
-            // F[0] + F[1]: shortest distance between hit points
-            // gapScaleFactor: relative amount we are away from minimum distance
-            //                 will usually be > 1
-            float gapScaleFactor = diffLen / (F[0] + F[1]);
-        
-            if(gapSize * gapScaleFactor > F[1] - F[0]) {
-                r *= (-1.0);
-            }
-            */
+        if(gapSize > 0 && 1.0 - AiSmoothStep(0.0f, gapSize, normalizedDist) > 0) {
+            isBorder = true;
         }
     }
 
-    if(r < 0) {
+    if(isBorder) {
+        // scaling for even-sized gaps. Originally an idea from Advaced Renderman section 10.5 on cell noise            
+        // see also https://thebookofshaders.com/12/
+        // and most importantly http://www.iquilezles.org/www/articles/voronoilines/voronoilines.htm
+        
+        // as soon as we have a normalized distance for each cell, we can just smoothstep that.
         AtRGB gapColor = AiShaderEvalParamRGB(p_gapColor);
         sg->out.RGB() = gapColor;
     }

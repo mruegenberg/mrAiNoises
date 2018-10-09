@@ -8,7 +8,7 @@
       houdini.icon STRING "COP2_lookup"
       houdini.category STRING "mr"
       houdini.help_url STRING ""
-      houdini.order STRING "space scale innercolor outercolor octaves lacunarity distancemeasure distancemode gapcolor gapsize jaggedgap"
+      houdini.order STRING "space scale innercolor outercolor octaves lacunarity distancemeasure distancemode gapcolor gapsize"
 
       [attr space]
            houdini.label STRING "Space"
@@ -50,7 +50,3 @@
            houdini.label STRING "Gap Size"
            desc STRING "Size of gap between cells"
            linkable BOOL TRUE
-      [attr jaggedgap]
-           houdini.label STRING "Jagged Gap"
-           desc STRING "Whether to add noise to the position to generate a jagged gap."
-           linkable BOOL FALSE
