@@ -1,4 +1,4 @@
-[node mrAiWorleynoise]
+[node mrAiCurlnoise]
       desc STRING "Worley noise for Arnold"
       c4d.classification STRING "texture"
       c4d.menu STRING "texture"
