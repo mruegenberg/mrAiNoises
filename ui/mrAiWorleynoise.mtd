@@ -8,7 +8,7 @@
       houdini.icon STRING "COP2_lookup"
       houdini.category STRING "mr"
       houdini.help_url STRING ""
-      houdini.order STRING "space scale innercolor outercolor octaves lacunarity distancemeasure distancemode gapcolor gapsize"
+      houdini.order STRING "space scale offset innercolor outercolor octaves lacunarity distancemeasure distancemode gapcolor gapsize"
 
       [attr space]
            houdini.label STRING "Space"
@@ -17,6 +17,10 @@
       [attr scale]
            houdini.label STRING "Scale"
            desc STRING "Space in which to calculate the noise pattern."
+           linkable BOOL TRUE
+      [attr offset]
+           houdini.label STRING "Offset"
+           desc STRING "Offset added to the position"
            linkable BOOL TRUE
       [attr innercolor]
            houdini.label STRING "Inner Color"

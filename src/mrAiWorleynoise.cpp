@@ -29,6 +29,7 @@ SOFTWARE.
 enum SolidtexParams {
     p_space,
     p_scale,
+    p_offset,
     p_innerColor,
     p_outerColor,
     p_gapColor,
@@ -86,6 +87,7 @@ node_parameters
 {
     AiParameterEnum("space", 0, worleySpaceNames);
     AiParameterVec("scale", 1.0f, 1.0f, 1.0f);
+    AiParameterVec("offset", 0.0f, 0.0f, 0.0f);
     AiParameterRGB("innercolor", 0.0f, 0.0f, 0.0f);
     AiParameterRGB("outercolor", 1.0f, 1.0f, 1.0f);
     AiParameterRGB("gapcolor", 0.0f, 0.0f, 0.0f);
@@ -155,6 +157,10 @@ shader_evaluate
         default: P = sg->P; break; // NS_WORLD
         }
     }
+
+    // offset
+    AtVector offset = AiShaderEvalParamVec(p_offset);
+    P += offset;
 
     // scaling
     AtVector scale = AiShaderEvalParamVec(p_scale);
