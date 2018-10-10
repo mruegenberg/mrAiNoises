@@ -37,6 +37,8 @@ enum SolidtexParams {
     p_lacunarity,
     p_distanceMeasure,
     p_distanceMode,
+    p_range,
+    p_clamp,
     p_gapSize,
     p_jaggedGap,
 };
@@ -95,6 +97,8 @@ node_parameters
     AiParameterFlt("lacunarity", 1.92f);
     AiParameterFlt("distancemeasure", 2.0f); // Minkowski distance measure
     AiParameterEnum("distancemode", 0, distmodeNames);
+    AiParameterVec2("range", 0.0f, 1.0f);
+    AiParameterBool("clamp", true);
     AiParameterFlt("gapsize", 0.05f);
 }
 
@@ -104,6 +108,9 @@ struct ShaderData {
     int octaves;
     float distMeasure;
     int distMode;
+    float remapInMin;
+    float remapInMax;
+    bool clamp;
 };
         
 
@@ -128,6 +135,11 @@ node_update
     data->octaves = AiNodeGetInt(node, "octaves");
     data->distMeasure = AiNodeGetFlt(node, "distancemeasure");
     data->distMode = AiNodeGetInt(node, "distancemode");
+
+    AtVector2 range = AiNodeGetVec2(node, "range");
+    data->remapInMin = range.x;
+    data->remapInMax = range.y;
+    data->clamp = AiNodeGetBool(node, "clamp");
 }
 
 node_loader
@@ -252,6 +264,12 @@ shader_evaluate
     else {
         AtRGB innerColor = AiShaderEvalParamRGB(p_innerColor);
         AtRGB outerColor = AiShaderEvalParamRGB(p_outerColor);
+
+        float dist = (data->remapInMax - data->remapInMin);
+        if(dist == 0.0f) dist = 1.0f;
+        r = (r - data->remapInMin) / dist;
+        if(data->clamp) r = AiClamp(r, 0.0f, 1.0f);
+        
         sg->out.RGB() = AiLerp(r, outerColor, innerColor);
     }
 }

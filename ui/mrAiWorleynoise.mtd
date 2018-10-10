@@ -8,7 +8,7 @@
       houdini.icon STRING "COP2_lookup"
       houdini.category STRING "mr"
       houdini.help_url STRING ""
-      houdini.order STRING "space scale offset innercolor outercolor octaves lacunarity distancemeasure distancemode gapcolor gapsize"
+      houdini.order STRING "space scale offset innercolor outercolor octaves lacunarity distancemeasure distancemode range clamp gapcolor gapsize"
 
       [attr space]
            houdini.label STRING "Space"
@@ -49,6 +49,14 @@
       [attr distancemode]
            houdini.label STRING "Distance Mode"
            desc STRING "How to combine the distances to the 3 closest points F1, F2, F3"
+           linkable BOOL FALSE
+      [attr range]
+           houdini.label STRING "Range"
+           desc STRING "Range assumed for distance before remapping"
+           linkable POINT2 FALSE
+      [attr clamp]
+           houdini.label STRING "Clamp"
+           desc STRING "Clamp remapped distance values to 0-1 range before interpolating colors"
            linkable BOOL FALSE
       [attr gapsize]
            houdini.label STRING "Gap Size"
