@@ -205,7 +205,7 @@ shader_evaluate
             }
         }
         
-        float fw[PT_CNT];
+        float fw[PT_CNT] = {0};
         switch (data->distMode) {
         case DIST_F1: fw[0] = 1.0; fw[1] = 0.0; fw[2] = 0.0; break;
         case DIST_F2_M_F1: fw[0] = -1.0; fw[1] = 1.0; fw[2] = 0.0; break;
@@ -233,7 +233,7 @@ shader_evaluate
                 normalizedDist = AiMin(normalizedDist, d);
             }
             
-            // TODO: find a way to get a function that always goes from 0 to 1
+            // TODO: find a way to get a function that *always* goes from 0 to 1
             //       until the border
         }
         

@@ -53,7 +53,7 @@
       [attr range]
            houdini.label STRING "Range"
            desc STRING "Range assumed for distance before remapping"
-           linkable POINT2 FALSE
+           linkable BOOL FALSE
       [attr clamp]
            houdini.label STRING "Clamp"
            desc STRING "Clamp remapped distance values to 0-1 range before interpolating colors"
