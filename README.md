@@ -21,7 +21,7 @@ This should result in shared libs (dll/so/dylib) in the `build` directory. Copy 
 # Samples
 A sphere displaced with mrAiCurlnoise and a mrAiWorleynoise texture showing the gap computation.
 
-![sample](samples/noises.png)
+![sample](https://raw.githubusercontent.com/mruegenberg/mrAiNoises/master/samples/noises.jpg)
 
 ## License
 The current version of the code is licensed under the MIT license.
